@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Analysis System</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #5da8ff, #bde0ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 1200px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .title {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .title h1 {
+            font-size: 40px;
+        }
+        
+        .title p {
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        
+        .search-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-box h3 {
+            margin-bottom: 20px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: #3a86ff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #2f6edc;
+        }
+        
+        .weather-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .temp {
+            font-size: 60px;
+            color: #3a86ff;
+        }
+        
+        .details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        
+        .analysis {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="title">
+            <h1>Weather Analysis System Using Historical Data</h1>
+            <p>Enter city name to analyze previous weather patterns and estimate today's climate.</p>
+        </div>
+
+        <div class="main">
+
+            <div class="search-box">
+                <h3>Enter City Name</h3>
+                <input type="text" id="city" placeholder="Enter City">
+                <button onclick="analyzeWeather()">Analyze</button>
+            </div>
+
+            <div class="weather-card">
+
+                <h2 id="cityName">City</h2>
+                <div class="temp" id="temp">--°C</div>
+
+                <div class="details">
+                    <div>
+                        <p>Humidity</p>
+                        <h3 id="humidity">--%</h3>
+                    </div>
+
+                    <div>
+                        <p>Wind</p>
+                        <h3 id="wind">-- km/h</h3>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="analysis">
+
+            <div class="box">
+                <h3>Fetch Historical Data</h3>
+                <p>Retrieve previous climate records</p>
+            </div>
+
+            <div class="box">
+                <h3>Analyze Data</h3>
+                <p>Process weekly weather patterns</p>
+            </div>
+
+            <div class="box">
+                <h3>Forecast</h3>
+                <p>Estimate today's weather</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        async function analyzeWeather() {
+
+            const city = document.getElementById("city").value
+
+            if (city === "") {
+                alert("Enter city name")
+                return
+            }
+
+            document.getElementById("cityName").innerText = city
+
+            const temp = (25 + Math.random() * 10).toFixed(1)
+            const humidity = (50 + Math.random() * 30).toFixed(0)
+            const wind = (5 + Math.random() * 15).toFixed(0)
+
+            document.getElementById("temp").innerText = temp + "°C"
+            document.getElementById("humidity").innerText = humidity + "%"
+            document.getElementById("wind").innerText = wind + " km/h"
+
+
+            await fetch("http://localhost:3000/add", {
+
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    city: city,
+                    temperature: temp,
+                    humidity: humidity,
+                    wind: wind
+                })
+
+            })
+
+        }
+    </script>
+
+</body>
+
+</html>
