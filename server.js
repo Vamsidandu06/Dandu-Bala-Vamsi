@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 mongoose.connect(
-        "mongodb://vamsi271006:passWORD1@ac-imkvihv-shard-00-00.ei3apl7.mongodb.net:27017,ac-imkvihv-shard-00-01.ei3apl7.mongodb.net:27017,ac-imkvihv-shard-00-02.ei3apl7.mongodb.net:27017/climateDB?ssl=true&replicaSet=atlas-12hfzt-shard-0&authSource=admin&retryWrites=true&w=majority"
+        "mongodb://localhost:27017/climateDB",
     )
     .then(() => {
         console.log("MongoDB Connected");
