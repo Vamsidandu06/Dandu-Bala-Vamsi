@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Modal Route Planner ✈️🚂🚗⛴️</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d4ff;
+            --secondary: #a855f7;
+            --accent: #ff6b6b;
+            --success: #00ff88;
+            --warning: #ffa502;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Animated Background */
+        .bg-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-shapes::before,
+        .bg-shapes::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-shapes::before {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%);
+            top: -100px;
+            left: -100px;
+        }
+
+        .bg-shapes::after {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%);
+            bottom: -200px;
+            right: -200px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(50px, 50px) rotate(5deg); }
+            50% { transform: translate(0, 100px) rotate(0deg); }
+            75% { transform: translate(-50px, 50px) rotate(-5deg); }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #00d4ff, #a855f7, #ff6b6b, #00ff88);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 5s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+        }
+
+        /* Search Card */
+        .search-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(30px);
+            border-radius: 30px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1fr 60px 1fr 180px;
+            gap: 25px;
+            align-items: end;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--primary);
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 20px 20px 20px 55px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 20px;
+            bottom: 22px;
+            color: var(--primary);
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus + i {
+            transform: scale(1.2);
+        }
+
+        .arrow-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            font-size: 2rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .analyze-btn {
+            padding: 22px 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 18px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyze-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .analyze-btn:hover::before {
+            left: 100%;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 50px rgba(0, 212, 255, 0.5);
+        }
+
+        /* Transport Modes */
+        .transport-modes {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mode-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--mode-color);
+        }
+
+        .mode-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--mode-color) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mode-card:hover::after {
+            opacity: 0.1;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--mode-color);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-card.recommended {
+            border-color: var(--success);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 40px rgba(0, 255, 136, 0.4); }
+            50% { box-shadow: 0 0 60px rgba(0, 255, 136, 0.6); }
+        }
+
+        .mode-card.recommended::before {
+            height: 100%;
+            opacity: 0.1;
+        }
+
+        .mode-card .badge {
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background: var(--success);
+            color: #0f0c29;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 6px 40px;
+            transform: rotate(45deg);
+        }
+
+        .mode-card .icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .mode-card:hover .icon {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .mode-card.air .icon { color: var(--primary); }
+        .mode-card.train .icon { color: var(--secondary); }
+        .mode-card.road .icon { color: var(--warning); }
+        .mode-card.sea .icon { color: var(--success); }
+
+        .mode-card h3 {
+            color: white;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .mode-card .details {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mode-card .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mode-card .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .mode-card .detail-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+        }
+
+        .mode-card .detail-value {
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .mode-card .detail-value.best {
+            color: var(--success);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        /* Weather Section */
+        .weather-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .weather-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .weather-card:hover {
+            transform: scale(1.02);
+        }
+
+        .weather-card h3 {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .weather-card h3 i {
+            color: var(--primary);
+        }
+
+        .weather-info {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .weather-icon {
+            font-size: 5rem;
+            animation: bounce 3s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .weather-data {
+            flex: 1;
+        }
+
+        .weather-data .temp {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: white;
+            line-height: 1;
+        }
+
+        .weather-data .condition {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            margin: 10px 0;
+            text-transform: capitalize;
+        }
+
+        .weather-data .meta {
+            display: flex;
+            gap: 25px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+        }
+
+        .weather-data .meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Route Weather */
+        .route-weather {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .route-weather h3 {
+            color: white;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .route-weather h3 i {
+            color: var(--secondary);
+        }
+
+        .weather-alert {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            padding: 25px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .weather-alert:hover {
+            transform: scale(1.01);
+        }
+
+        .weather-alert.good {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 212, 255, 0.15));
+            border: 2px solid var(--success);
+        }
+
+        .weather-alert.caution {
+            background: linear-gradient(135deg, rgba(255, 165, 2, 0.2), rgba(255, 255, 255, 0.1));
+            border: 2px solid var(--warning);
+        }
+
+        .weather-alert.bad {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 0, 0, 0.1));
+            border: 2px solid var(--accent);
+        }
+
+        .weather-alert .alert-icon {
+            font-size: 3rem;
+        }
+
+        .weather-alert.good .alert-icon { color: var(--success); }
+        .weather-alert.caution .alert-icon { color: var(--warning); }
+        .weather-alert.bad .alert-icon { color: var(--accent); }
+
+        .weather-alert .alert-content h4 {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        .weather-alert .alert-content p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+        }
+
+        /* Comparison Chart */
+        .comparison-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+
+        .comparison-section h3 {
+            color: white;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .comparison-section h3 i {
+            color: var(--warning);
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading i {
+            font-size: 4rem;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: white;
+            margin-top: 25px;
+            font-size: 1.2rem;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .transport-modes {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .arrow-icon {
+                transform: rotate(90deg);
+            }
+
+            .transport-modes, .weather-section {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .mode-card .badge {
+                font-size: 0.6rem;
+                padding: 5px 30px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-shapes"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-route"></i> Multi-Modal Route Planner</h1>
+            <p>Compare all travel routes • Check weather • Find the best way to travel</p>
+        </div>
+
+        <!-- Search Card -->
+        <div class="search-card">
+            <div class="search-grid">
+                <div class="input-group">
+                    <label>From City</label>
+                    <input type="text" id="fromCity" placeholder="e.g., Mumbai, Delhi, Bangalore">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+
+                <div class="arrow-icon">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+
+                <div class="input-group">
+                    <label>To City</label>
+                    <input type="text" id="toCity" placeholder="e.g., Chennai, Kolkata, Goa">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+
+                <button class="analyze-btn" onclick="analyze()">
+                    <i class="fas fa-rocket"></i> Analyze
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Calculating routes and checking weather...</p>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="results">
+
+            <!-- Transport Modes -->
+            <h3 style="color: white; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; font-size: 1.4rem;">
+                <i class="fas fa-transport" style="color: var(--primary);"></i> Compare Travel Modes
+            </h3>
+            <div class="transport-modes" id="transportModes">
+                <!-- Air -->
+                <div class="mode-card air" style="--mode-color: #00d4ff;">
+                    <div class="icon"><i class="fas fa-plane-departure"></i></div>
+                    <h3>✈️ By Airplane</h3>
+                    <div class="details">
+                        <div class="detail-row">
+                            <span class="detail-label">Distance</span>
+                            <span class="detail-value" id="airDistance">-- km</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Est. Time</span>
+                            <span class="detail-value" id="airTime">-- hrs</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Cost (INR)</span>
+                            <span class="detail-value" id="airCost">₹--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Train -->
+                <div class="mode-card train" style="--mode-color: #a855f7;">
+                    <div class="icon"><i class="fas fa-train"></i></div>
+                    <h3>🚂 By Train</h3>
+                    <div class="details">
+                        <div class="detail-row">
+                            <span class="detail-label">Distance</span>
+                            <span class="detail-value" id="trainDistance">-- km</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Est. Time</span>
+                            <span class="detail-value" id="trainTime">-- hrs</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Cost (INR)</span>
+                            <span class="detail-value" id="trainCost">₹--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Road -->
+                <div class="mode-card road" style="--mode-color: #ffa502;">
+                    <div class="icon"><i class="fas fa-bus"></i></div>
+                    <h3>🚌 By Bus (AC)</h3>
+                    <div class="details">
+                        <div class="detail-row">
+                            <span class="detail-label">Distance</span>
+                            <span class="detail-value" id="roadDistance">-- km</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Est. Time</span>
+                            <span class="detail-value" id="roadTime">-- hrs</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">AC Bus</span>
+                            <span class="detail-value" id="roadCost">₹--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Non-AC</span>
+                            <span class="detail-value" id="roadCostNonAc">₹--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sea -->
+                <div class="mode-card sea" style="--mode-color: #00ff88;">
+                    <div class="icon"><i class="fas fa-ship"></i></div>
+                    <h3>⛴️ By Sea</h3>
+                    <div class="details">
+                        <div class="detail-row">
+                            <span class="detail-label">Distance</span>
+                            <span class="detail-value" id="seaDistance">-- km</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Est. Time</span>
+                            <span class="detail-value" id="seaTime">-- hrs</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Cost (INR)</span>
+                            <span class="detail-value" id="seaCost">₹--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Section -->
+            <div class="weather-section">
+                <div class="weather-card">
+                    <h3><i class="fas fa-plane-departure"></i> Origin Weather</h3>
+                    <div class="weather-info">
+                        <span class="weather-icon" id="fromWeatherIcon">🌤️</span>
+                        <div class="weather-data">
+                            <div class="temp" id="fromTemp">--°C</div>
+                            <div class="condition" id="fromCondition">--</div>
+                            <div class="meta">
+                                <span>💧 <span id="fromHumidity">--</span>%</span>
+                                <span>💨 <span id="fromWind">--</span> m/s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="weather-card">
+                    <h3><i class="fas fa-flag-checkered"></i> Destination Weather</h3>
+                    <div class="weather-info">
+                        <span class="weather-icon" id="toWeatherIcon">🌤️</span>
+                        <div class="weather-data">
+                            <div class="temp" id="toTemp">--°C</div>
+                            <div class="condition" id="toCondition">--</div>
+                            <div class="meta">
+                                <span>💧 <span id="toHumidity">--</span>%</span>
+                                <span>💨 <span id="toWind">--</span> m/s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Route Weather -->
+            <div class="route-weather">
+                <h3><i class="fas fa-cloud-sun"></i> Travel Weather Forecast</h3>
+                <div class="weather-alert good" id="weatherAlert">
+                    <span class="alert-icon" id="alertIcon">✅</span>
+                    <div class="alert-content">
+                        <h4 id="alertTitle">Good to Travel</h4>
+                        <p id="alertText">Weather conditions are favorable for your chosen route.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Chart -->
+            <div class="comparison-section">
+                <h3><i class="fas fa-chart-bar"></i> Route Comparison</h3>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API = "1c846b8311813b35bf374b6579682470";
+
+        const weatherIcons = {
+            'Clear': '☀️', 'Clouds': '☁️', 'Rain': '🌧️', 'Drizzle': '🌦️',
+            'Thunderstorm': '⛈️', 'Snow': '❄️', 'Mist': '🌫️', 'Fog': '🌫️',
+            'Haze': '🌫️', 'Dust': '💨', 'Sand': '💨'
+        };
+
+        function calculateDirectDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function calculateRouteModes(distance, fromCity, toCity, fromCountry, toCountry) {
+            const from = fromCity.toLowerCase();
+            const to = toCity.toLowerCase();
+            
+            // Check if international route
+            const isInternational = fromCountry !== toCountry;
+            
+            // Major airports in India and worldwide
+            const airportCities = [
+                'mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai', 'kolkata',
+                'pune', 'goa', 'jaipur', 'lucknow', 'chandigarh', 'kochi', 'trivandrum',
+                'ahmedabad', 'surat', 'nagpur', 'bhubaneswar', 'patna', 'indore',
+                'new york', 'los angeles', 'chicago', 'dallas', 'houston', 'san francisco',
+                'seattle', 'miami', 'atlanta', 'boston', 'phoenix', 'denver',
+                'london', 'paris', 'berlin', 'madrid', 'rome', 'amsterdam',
+                'tokyo', 'dubai', 'singapore', 'hong kong', 'sydney', 'melbourne',
+                'bangkok', 'kuala lumpur', 'istanbul', 'moscow', 'cairo', 'toronto', 'vancouver'
+            ];
+            
+            // Coastal cities for sea routes
+            const coastalCities = [
+                'mumbai', 'goa', 'kochi', 'chennai', 'kolkata', 'visakhapatnam',
+                'mangalore', 'new york', 'los angeles', 'miami', 'san francisco',
+                'singapore', 'hong kong', 'dubai', 'bali', 'phuket', 'colombo',
+                'dallas' // Dallas port for cruises
+            ];
+            
+            const fromHasAirport = airportCities.includes(from);
+            const toHasAirport = airportCities.includes(to);
+            const fromCoastal = coastalCities.includes(from);
+            const toCoastal = coastalCities.includes(to);
+            const bothCoastal = fromCoastal && toCoastal;
+
+            // Calculate direct distance for each mode
+            const airDistance = distance * 1.1;
+            const trainDistance = distance * 1.25;
+            const roadDistance = distance * 1.35;
+            const seaDistance = distance * 1.15;
+
+            // Calculate times (average speeds in km/h)
+            const airTime = (airDistance / 800) + 1.5; // +1.5h for security/check-in
+            const trainTime = (trainDistance / 80);
+            const roadTime = (roadDistance / 60); // bus speed
+            const seaTime = (seaDistance / 30);
+
+            // Calculate costs in INR
+            // Air: Base fare ₹1500 + ₹6 per km
+            const airCost = fromHasAirport && toHasAirport ? (1500 + distance * 6) : null;
+            
+            // Train: ₹0.8 per km (sleeper class) - ONLY for domestic
+            const trainCost = !isInternational ? (trainDistance * 0.8) : null;
+            
+            // Road (Bus): AC - ₹1.8/km, Non-AC - ₹1.1/km - ONLY for domestic
+            const acBusCost = !isInternational ? (roadDistance * 1.8) : null;
+            const nonAcBusCost = !isInternational ? (roadDistance * 1.1) : null;
+            
+            // Sea: ₹2 per km (ferry) - international or coastal domestic
+            const seaCost = bothCoastal ? (seaDistance * 2) : null;
+
+            // Determine best route (fastest available)
+            const availableModes = [];
+            if (airCost) availableModes.push({ mode: 'air', time: airTime, cost: airCost, distance: airDistance });
+            if (trainCost) availableModes.push({ mode: 'train', time: trainTime, cost: trainCost, distance: trainDistance });
+            if (acBusCost) availableModes.push({ mode: 'road', time: roadTime, cost: acBusCost, nonAcCost: nonAcBusCost, distance: roadDistance });
+            if (seaCost) availableModes.push({ mode: 'sea', time: seaTime, cost: seaCost, distance: seaDistance });
+
+            availableModes.sort((a, b) => a.time - b.time);
+
+            return {
+                isInternational: isInternational,
+                air: { distance: airDistance, time: airTime, cost: airCost, available: fromHasAirport && toHasAirport },
+                train: { distance: trainDistance, time: trainTime, cost: trainCost, available: !isInternational },
+                road: { distance: roadDistance, time: roadTime, cost: acBusCost, nonAcCost: nonAcBusCost, available: !isInternational },
+                sea: { distance: seaDistance, time: seaTime, cost: seaCost, available: bothCoastal },
+                best: availableModes.length > 0 ? availableModes[0].mode : 'air'
+            };
+        }
+
+        function getWeatherAdvice(condition, temp) {
+            if (condition.includes('Thunderstorm') || condition.includes('Tornado')) {
+                return { status: 'bad', icon: '⛈️', title: 'Severe Weather Alert', text: 'Thunderstorms expected. Consider postponing travel or choosing alternative routes.' };
+            }
+            if (condition.includes('Storm')) {
+                return { status: 'caution', icon: '🌩️', title: 'Storm Warning', text: 'Storms may cause delays. Check real-time updates before traveling.' };
+            }
+            if (condition.includes('Rain') || condition.includes('Drizzle')) {
+                return { status: 'caution', icon: '🌧️', title: 'Rain Expected', text: 'Rainy conditions. Pack umbrella and allow extra travel time.' };
+            }
+            if (temp > 40) {
+                return { status: 'caution', icon: '🔥', title: 'Extreme Heat', text: 'Very high temperatures. Stay hydrated and use AC during travel.' };
+            }
+            if (temp < 0) {
+                return { status: 'caution', icon: '❄️', title: 'Freezing Conditions', text: 'Below freezing temperatures. Dress warmly and watch for ice on roads.' };
+            }
+            if (condition.includes('Snow')) {
+                return { status: 'caution', icon: '🌨️', title: 'Snow Alert', text: 'Snow expected. Possible delays at airports or road closures.' };
+            }
+            return { status: 'good', icon: '✅', title: 'Ideal Travel Weather', text: 'Clear skies and pleasant conditions. Perfect for any mode of travel!' };
+        }
+
+        function formatINR(amount) {
+            return '₹' + Math.round(amount).toLocaleString('en-IN');
+        }
+
+        async function analyze() {
+            const fromCity = document.getElementById("fromCity").value.trim();
+            const toCity = document.getElementById("toCity").value.trim();
+
+            if (!fromCity || !toCity) {
+                alert("Please enter both cities!");
+                return;
+            }
+
+            document.getElementById("loading").classList.add("active");
+            document.getElementById("results").classList.remove("visible");
+
+            try {
+                const [res1, res2] = await Promise.all([
+                    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${fromCity}&appid=${API}&units=metric`),
+                    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${toCity}&appid=${API}&units=metric`)
+                ]);
+
+                const d1 = await res1.json();
+                const d2 = await res2.json();
+
+                if (d1.cod !== 200 || d2.cod !== 200) {
+                    alert("City not found. Please check the city names.");
+                    document.getElementById("loading").classList.remove("active");
+                    return;
+                }
+
+                const distance = calculateDirectDistance(
+                    d1.coord.lat, d1.coord.lon,
+                    d2.coord.lat, d2.coord.lon
+                );
+
+                // Get country codes from API response
+                const fromCountry = d1.sys.country;
+                const toCountry = d2.sys.country; 
+
+                const routes = calculateRouteModes(distance, d1.name, d2.name, fromCountry, toCountry);
+                const weatherAdvice = getWeatherAdvice(d2.weather[0].main, d2.main.temp);
+
+                updateUI(d1, d2, distance, routes, weatherAdvice, fromCountry, toCountry);
+
+                document.getElementById("loading").classList.remove("active");
+                document.getElementById("results").classList.add("visible");
+
+                // Save to backend
+                try {
+                    await fetch("http://localhost:3000/saveTravel", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            fromCity: d1.name,
+                            toCity: d2.name,
+                            tempFrom: d1.main.temp,
+                            tempTo: d2.main.temp,
+                            distance: distance.toFixed(2),
+                            travelMode: routes.best,
+                            decision: weatherAdvice.title
+                        })
+                    });
+                } catch (e) {
+                    console.log("Backend not connected");
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Error fetching data. Please try again.");
+                document.getElementById("loading").classList.remove("active");
+            }
+        }
+
+        function updateUI(d1, d2, distance, routes, advice, fromCountry, toCountry) {
+            const modes = ['air', 'train', 'road', 'sea'];
+            const isInternational = routes.isInternational;
+            
+            // Update route type indicator
+            const routeTypeText = isInternational ? 
+                `🌍 International Route (${d1.sys.country} → ${d2.sys.country})` : 
+                `🇮🇳 Domestic Route (India)`;
+            
+            modes.forEach(mode => {
+                const route = routes[mode];
+                const card = document.querySelector(`.mode-card.${mode}`);
+                
+                card.classList.remove('recommended');
+                
+                // Update distance and time
+                document.getElementById(`${mode}Distance`).innerText = Math.round(route.distance).toLocaleString('en-IN') + ' km';
+                document.getElementById(`${mode}Time`).innerText = route.time.toFixed(1) + ' hrs';
+                
+                // Update costs based on mode and route type
+                if (mode === 'air') {
+                    if (route.available) {
+                        document.getElementById('airCost').innerText = formatINR(route.cost);
+                        card.style.opacity = '1';
+                    } else {
+                        document.getElementById('airCost').innerText = 'No Airport';
+                        card.style.opacity = '0.5';
+                    }
+                } else if (mode === 'train') {
+                    if (route.available) {
+                        document.getElementById('trainCost').innerText = formatINR(route.cost);
+                        card.style.opacity = '1';
+                    } else {
+                        document.getElementById('trainCost').innerText = 'International';
+                        card.style.opacity = '0.5';
+                    }
+                } else if (mode === 'road') {
+                    if (route.available) {
+                        document.getElementById('roadCost').innerText = formatINR(route.cost);
+                        document.getElementById('roadCostNonAc').innerText = formatINR(route.nonAcCost);
+                        card.style.opacity = '1';
+                    } else {
+                        document.getElementById('roadCost').innerText = 'International';
+                        document.getElementById('roadCostNonAc').innerText = '-';
+                        card.style.opacity = '0.5';
+                    }
+                } else if (mode === 'sea') {
+                    if (route.available) {
+                        document.getElementById('seaCost').innerText = formatINR(route.cost);
+                        card.style.opacity = '1';
+                    } else {
+                        document.getElementById('seaCost').innerText = isInternational ? 'No Sea Route' : 'Not Coastal';
+                        card.style.opacity = '0.5';
+                    }
+                }
+            });
+
+            // Mark best route
+            const bestCard = document.querySelector(`.mode-card.${routes.best}`);
+            if (bestCard) {
+                bestCard.classList.add('recommended');
+                // Add badge
+                let badge = bestCard.querySelector('.badge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'badge';
+                    badge.innerHTML = '★ BEST';
+                    bestCard.appendChild(badge);
+                }
+            }
+
+            // Update weather cards
+            document.getElementById('fromTemp').innerText = Math.round(d1.main.temp) + '°C';
+            document.getElementById('fromCondition').innerText = d1.weather[0].description;
+            document.getElementById('fromHumidity').innerText = d1.main.humidity;
+            document.getElementById('fromWind').innerText = d1.wind.speed;
+            document.getElementById('fromWeatherIcon').innerText = weatherIcons[d1.weather[0].main] || '🌤️';
+
+            document.getElementById('toTemp').innerText = Math.round(d2.main.temp) + '°C';
+            document.getElementById('toCondition').innerText = d2.weather[0].description;
+            document.getElementById('toHumidity').innerText = d2.main.humidity;
+            document.getElementById('toWind').innerText = d2.wind.speed;
+            document.getElementById('toWeatherIcon').innerText = weatherIcons[d2.weather[0].main] || '🌤️';
+
+            // Update weather alert
+            const alert = document.getElementById('weatherAlert');
+            alert.className = 'weather-alert ' + advice.status;
+            document.getElementById('alertIcon').innerText = advice.icon;
+            document.getElementById('alertTitle').innerText = advice.title;
+            document.getElementById('alertText').innerText = advice.text;
+
+            // Update chart - only show available modes
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            if (window.chart) window.chart.destroy();
+
+            const availableLabels = [];
+            const availableTimes = [];
+            const availableCosts = [];
+            const availableColors = [];
+            
+            if (routes.air.available) {
+                availableLabels.push('Airplane');
+                availableTimes.push(routes.air.time);
+                availableCosts.push(routes.air.cost);
+                availableColors.push('rgba(0, 212, 255, 0.8)');
+            }
+            if (routes.train.available) {
+                availableLabels.push('Train');
+                availableTimes.push(routes.train.time);
+                availableCosts.push(routes.train.cost);
+                availableColors.push('rgba(168, 85, 247, 0.8)');
+            }
+            if (routes.road.available) {
+                availableLabels.push('Bus (AC)');
+                availableTimes.push(routes.road.time);
+                availableCosts.push(routes.road.cost);
+                availableColors.push('rgba(255, 165, 2, 0.8)');
+            }
+            if (routes.sea.available) {
+                availableLabels.push('Sea');
+                availableTimes.push(routes.sea.time);
+                availableCosts.push(routes.sea.cost);
+                availableColors.push('rgba(0, 255, 136, 0.8)');
+            }
+
+            window.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: availableLabels,
+                    datasets: [
+                        {
+                            label: 'Time (hours)',
+                            data: availableTimes,
+                            backgroundColor: availableColors,
+                            borderColor: availableColors.map(c => c.replace('0.8', '1')),
+                            borderWidth: 3,
+                            borderRadius: 12,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Cost (₹)',
+                            data: availableCosts,
+                            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                            borderColor: 'rgba(255, 255, 255, 0.8)',
+                            borderWidth: 2,
+                            borderRadius: 12,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: { 
+                                color: 'white',
+                                font: { size: 14 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'white', font: { size: 14 } }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#00d4ff' },
+                            title: { display: true, text: 'Time (hours)', color: '#00d4ff', font: { size: 12 } }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: { color: '#ffa502' },
+                            title: { display: true, text: 'Cost (₹)', color: '#ffa502', font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Enter key support
+        document.getElementById("fromCity").addEventListener("keypress", e => {
+            if (e.key === "Enter") analyze();
+        });
+        document.getElementById("toCity").addEventListener("keypress", e => {
+            if (e.key === "Enter") analyze();
+        });
+    </script>
+
+</body>
+
+</html>
